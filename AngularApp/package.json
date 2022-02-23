@@ -68,7 +68,7 @@
     "ngx-markdown": "6.0.0 - 6.2.0",
     "ngx-monaco-editor": "^8.1.1",
     "ngx-smart-modal": "^6.0.4",
-    "node-sass": "^4.12.0",
+    "node-sass": "^7.0.0",
     "office-ui-fabric-core": "11.0.0",
     "office-ui-fabric-react": "6.201.1",
     "pdfmake": "^0.1.72",
