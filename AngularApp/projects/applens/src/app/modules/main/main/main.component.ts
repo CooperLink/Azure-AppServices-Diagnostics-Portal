@@ -160,9 +160,9 @@ export class MainComponent implements OnInit {
       this.accessErrorMessage = this._activatedRoute.snapshot.queryParams['errorMessage'];
     }
     if (this._activatedRoute.snapshot.queryParams['resourceType']) {
-      let foundResourceType = this.defaultResourceTypes.find(resourceType => resourceType.resourceType === this._activatedRoute.snapshot.queryParams['resourceType']);
+      let foundResourceType = this.defaultResourceTypes.find(resourceType => resourceType.resourceType.toLowerCase() === this._activatedRoute.snapshot.queryParams['resourceType'].toLowerCase());
       if (!foundResourceType) {
-        this.selectedResourceType = this.defaultResourceTypes.find(resourceType => resourceType.resourceType === "ARMResourceId");
+        this.selectedResourceType = this.defaultResourceTypes.find(resourceType => resourceType.resourceType.toLowerCase() === "armresourceid");
         this.resourceName = this._activatedRoute.snapshot.queryParams['resourceId'];
       }
       else {
