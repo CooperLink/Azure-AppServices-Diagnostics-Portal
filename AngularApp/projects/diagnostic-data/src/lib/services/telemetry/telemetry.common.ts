@@ -97,6 +97,9 @@ export const TelemetryEventNames = {
     ResiliencyScoreReportButtonClicked: 'ResiliencyScoreReportButtonClicked', 
     ResiliencyScoreReportDownloaded: 'ResiliencyScoreReportDownloaded',
     ResourceOutOfScopeUserResponse: 'ResourceOutOfScopeUserResponse',
+    ICMTemplateManagementPage: 'ICMTemplateManagementPage',
+    ICMTeamTemplateLoaded: 'ICMTeamTemplateLoaded',
+    ICMTeamTemplateUpdate: 'ICMTeamTemplateUpdate',
 };
 
 export const TelemetrySource = {

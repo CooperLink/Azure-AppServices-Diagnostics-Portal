@@ -64,5 +64,63 @@ namespace AppLensV3.Controllers
             var responseTask = response.Content.ReadAsStringAsync();
             return StatusCode((int)response.StatusCode, await responseTask);
         }
+
+        [HttpGet("getOnboardedTeams")]
+        [HttpOptions("getOnboardedTeams")]
+        public async Task<IActionResult> GetOnboardedTeams()
+        {
+            var response = await _incidentAssistanceService.GetOnboardedTeams();
+            var responseTask = response.Content.ReadAsStringAsync();
+            return StatusCode((int)response.StatusCode, await responseTask);
+        }
+
+        [HttpGet("getTeamTemplate/{teamId}/{incidentType}")]
+        [HttpOptions("getTeamTemplate/{teamId}/{incidentType}")]
+        public async Task<IActionResult> GetTeamTemplate(string teamId, string incidentType)
+        {
+            var response = await _incidentAssistanceService.GetTeamTemplate(teamId, incidentType);
+            var responseTask = response.Content.ReadAsStringAsync();
+            return StatusCode((int)response.StatusCode, await responseTask);
+        }
+
+        [HttpPost("updateTeamTemplate/{teamId}/{incidentType}")]
+        [HttpOptions("updateTeamTemplate/{teamId}/{incidentType}")]
+        public async Task<IActionResult> UpdateTeamTemplate([FromBody] JToken body, string teamId, string incidentType)
+        {
+            if (string.IsNullOrWhiteSpace(teamId))
+            {
+                return BadRequest("teamId cannot be empty");
+            }
+            if (string.IsNullOrWhiteSpace(incidentType))
+            {
+                return BadRequest("incidentType cannot be empty");
+            }
+            if (body != null)
+            {
+                var response = await _incidentAssistanceService.UpdateTeamTemplate(teamId, incidentType, body);
+                var responseTask = response.Content.ReadAsStringAsync();
+                return StatusCode((int)response.StatusCode, await responseTask);
+            }
+            else
+            {
+                return BadRequest("Request Body cannot be empty");
+            }
+        }
+
+        [HttpPost("testTemplateWithIncident")]
+        [HttpOptions("testTemplateWithIncident")]
+        public async Task<IActionResult> TestTemplateWithIncident([FromBody] JToken body)
+        {
+            if (body != null)
+            {
+                var response = await _incidentAssistanceService.TestTemplateWithIncident(body);
+                var responseTask = response.Content.ReadAsStringAsync();
+                return StatusCode((int)response.StatusCode, await responseTask);
+            }
+            else
+            {
+                return BadRequest("Request Body cannot be empty");
+            }
+        }
     }
 }

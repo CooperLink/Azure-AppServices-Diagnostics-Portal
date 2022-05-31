@@ -22,5 +22,25 @@ namespace AppLensV3.Services
         {
             return null;
         }
+
+        Task<HttpResponseMessage> IIncidentAssistanceService.GetOnboardedTeams()
+        {
+            return null;
+        }
+
+        Task<HttpResponseMessage> IIncidentAssistanceService.GetTeamTemplate(string teamId, string incidentType)
+        {
+            return null;
+        }
+
+        Task<HttpResponseMessage> IIncidentAssistanceService.UpdateTeamTemplate(string teamId, string incidentType, object payload)
+        {
+            return null;
+        }
+
+        Task<HttpResponseMessage> IIncidentAssistanceService.TestTemplateWithIncident(object payload)
+        {
+            return null;
+        }
     }
 }

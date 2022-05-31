@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Threading;
@@ -12,6 +13,8 @@ using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Configuration;
 using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Http;
 
 namespace AppLensV3.Services
 {
@@ -20,6 +23,10 @@ namespace AppLensV3.Services
         Task<bool> IsEnabled();
         Task<HttpResponseMessage> GetIncidentInfo(string incidentId);
         Task<HttpResponseMessage> ValidateAndUpdateIncident(string incidentId, object payload, string update);
+        Task<HttpResponseMessage> GetOnboardedTeams();
+        Task<HttpResponseMessage> GetTeamTemplate(string teamId, string incidentType);
+        Task<HttpResponseMessage> UpdateTeamTemplate(string teamId, string incidentType, object payload);
+        Task<HttpResponseMessage> TestTemplateWithIncident(object payload);
     }
 
     public class IncidentAssistanceService : IIncidentAssistanceService
@@ -27,6 +34,7 @@ namespace AppLensV3.Services
         private bool isEnabled;
         private string IncidentAssistEndpoint;
         private string ApiKey;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly Lazy<HttpClient> _client = new Lazy<HttpClient>(() =>
         {
             var client = new HttpClient();
@@ -43,21 +51,50 @@ namespace AppLensV3.Services
             }
         }
 
-        public IncidentAssistanceService(IConfiguration configuration)
+        public IncidentAssistanceService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             if (!bool.TryParse(configuration["IncidentAssistance:IsEnabled"].ToString(), out isEnabled))
             {
                 isEnabled = false;
             }
-            if (isEnabled) {
+            if (isEnabled)
+            {
                 IncidentAssistEndpoint = configuration["IncidentAssistance:IncidentAssistEndpoint"].ToString();
                 ApiKey = configuration["IncidentAssistance:ApiKey"].ToString();
             }
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<bool> IsEnabled()
         {
             return isEnabled;
+        }
+
+        private Tuple<bool, string> CheckUserAccess(string allowedUsers)
+        {
+            if (string.IsNullOrWhiteSpace(allowedUsers))
+            {
+                return new Tuple<bool, string>(false, "Team admin has not set an allowed users list.");
+            }
+            var allowedUsersList = allowedUsers.ToLower().Split(',');
+            string authHeader = _httpContextAccessor.HttpContext.Request.Headers.TryGetValue("Authorization", out var headerValue) ? headerValue.ToString() : null;
+            if (!string.IsNullOrWhiteSpace(authHeader))
+            {
+                string accessToken = authHeader.Split(" ")[1];
+                var token = new JwtSecurityToken(accessToken);
+                object upn;
+                string userAlias = null;
+                if (token.Payload.TryGetValue("upn", out upn))
+                {
+                    userAlias = upn != null ? upn.ToString().Split('@')[0].ToLower() : null;
+                }
+                bool hasAccess = (!string.IsNullOrWhiteSpace(userAlias) && allowedUsersList.FirstOrDefault(x => x == userAlias) != null);
+                return new Tuple<bool, string>(hasAccess, hasAccess ? "" : "User is not authorized to access this team template.");
+            }
+            else
+            {
+                return new Tuple<bool, string>(false, "Request does not have an authorization header.");
+            }
         }
 
         public async Task<HttpResponseMessage> GetIncidentInfo(string incidentId)
@@ -76,8 +113,86 @@ namespace AppLensV3.Services
             {
                 throw new ArgumentException("incidentId");
             }
-            
+
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"{IncidentAssistEndpoint}/api/ValidateAndUpdateICM?code={ApiKey}&update={update}");
+            request.Content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            return await _httpClient.SendAsync(request);
+        }
+
+        public async Task<HttpResponseMessage> GetOnboardedTeams()
+        {
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{IncidentAssistEndpoint}/api/GetOnboardedTeams?code={ApiKey}");
+            return await _httpClient.SendAsync(request);
+        }
+
+        public async Task<HttpResponseMessage> GetTeamTemplate(string teamId, string incidentType)
+        {
+            if (string.IsNullOrWhiteSpace(teamId))
+            {
+                throw new ArgumentException("teamId");
+            }
+            if (string.IsNullOrWhiteSpace(incidentType))
+            {
+                throw new ArgumentException("incidentType");
+            }
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{IncidentAssistEndpoint}/api/GetTeamTemplate/{teamId}/{incidentType}?code={ApiKey}");
+            var response = await _httpClient.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                var responseStr = await response.Content.ReadAsStringAsync();
+                string failureReason = null;
+                var responseBody = JsonConvert.DeserializeObject<dynamic>(responseStr);
+                responseBody = JsonConvert.DeserializeObject<dynamic>(responseBody);
+                if (responseBody["TemplateWriters"] != null)
+                {
+                    Tuple<bool, string> hasAccess = CheckUserAccess(responseBody["TemplateWriters"].ToString());
+                    if (hasAccess.Item1)
+                    {
+                        return response;
+                    }
+                    else
+                    {
+                        failureReason = hasAccess.Item2;
+                    }
+                }
+                else
+                {
+                    failureReason = "Team admin has not set a list of allowed users to access this template";
+                }
+                return new HttpResponseMessage()
+                {
+                    StatusCode = HttpStatusCode.Unauthorized,
+                    Content = new StringContent(failureReason)
+                };
+            }
+            else
+            {
+                return response;
+            }
+        }
+
+        public async Task<HttpResponseMessage> UpdateTeamTemplate(string teamId, string incidentType, object payload)
+        {
+            if (string.IsNullOrWhiteSpace(teamId))
+            {
+                throw new ArgumentException("teamId");
+            }
+            if (string.IsNullOrWhiteSpace(incidentType))
+            {
+                throw new ArgumentException("incidentType");
+            }
+            var getTemplateResponse = await GetTeamTemplate(teamId, incidentType);
+            if (getTemplateResponse.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                return getTemplateResponse;
+            }
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"{IncidentAssistEndpoint}/api/UpdateTeamTemplate/{teamId}/{incidentType}?code={ApiKey}");
+            request.Content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            return await _httpClient.SendAsync(request);
+        }
+
+        public async Task<HttpResponseMessage> TestTemplateWithIncident(object payload) {
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"{IncidentAssistEndpoint}/api/TestTemplateWithIncident?code={ApiKey}");
             request.Content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
             return await _httpClient.SendAsync(request);
         }
