@@ -35,6 +35,7 @@ export class TemplateManagementComponent implements OnInit {
   showTestBlade: boolean = false;
   testIncidentId: string = null;
   validationResponse: any = {};
+  testinIncidentLoader: boolean = false;
   testIncidentError: string = null;
   errorButtonStatus = HealthStatus.Critical;
   onTestClick() {
@@ -181,9 +182,10 @@ export class TemplateManagementComponent implements OnInit {
       "validationTemplate": JSON.parse(this.teamTemplate)
     };
     this.resetTestIncidentVariables();
-    this.displayLoader = true;
+    this.testinIncidentLoader = true;
+    this.loaderMessage = `Testing against incident ${this.testIncidentId.trim()}`;
     this._incidentAssistanceService.testTemplateWithIncident(body).subscribe(res => {
-      this.displayLoader = false;
+      this.testinIncidentLoader = false;
       var result = JSON.parse(res.body);
       if (result){
         this.validationResponse = {
@@ -194,7 +196,7 @@ export class TemplateManagementComponent implements OnInit {
       }
     },
     (err) => {
-      this.displayLoader = false;
+      this.testinIncidentLoader = false;
       this.testIncidentError = err.error.length>200? "An error occurred": err.error;
     });
   }
