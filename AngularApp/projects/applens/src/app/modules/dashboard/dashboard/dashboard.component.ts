@@ -254,7 +254,9 @@ export class DashboardComponent implements OnDestroy {
   }
 
   ngOnInit() {
-    setInterval(() => {this.addCaseNumberToLinks(this._diagnosticApiService.CustomerCaseNumber)}, 500);
+    if (this._diagnosticApiService.CustomerCaseNumber && this._diagnosticApiService.CustomerCaseNumber.length>0) {
+      setInterval(() => {this.addCaseNumberToLinks(this._diagnosticApiService.CustomerCaseNumber)}, 500);
+    }
     this.examineUserAccess();
     this.stillLoading = true;
     this._diagnosticService.getDetectors().subscribe(detectors => {
