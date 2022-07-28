@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,6 +17,8 @@ namespace Backend.Controllers
         private IConfiguration config;
         private IWebHostEnvironment env;
 
+        private string[] BlockedSections = new string[] { "Kusto", "AppInsights" };
+
         public AppSettingsController(IConfiguration configuration, IWebHostEnvironment env)
         {
             this.config = configuration;
@@ -29,6 +31,11 @@ namespace Backend.Controllers
             if (string.IsNullOrWhiteSpace(name))
             {
                 return BadRequest("App setting name is empty");
+            }
+
+            if (BlockedSections != null && BlockedSections.Any(sectionName => name.StartsWith(sectionName)))
+            {
+                return NotFound($"App setting with the name '{name}' is not found");
             }
 
             return Ok(config[name]);
