@@ -102,9 +102,9 @@ namespace AppLensV3.Authorization
         private ICosmosDBHandlerBase<TemporaryAccessUser> _cosmosDBHandler;
         private readonly long temporaryAccessExpiryInSeconds;
         private readonly int temporaryAccessDays = 7;
-        private readonly ILogger _logger;
+        private readonly ILogger<SecurityGroupHandler> _logger;
 
-        public SecurityGroupHandler(IHttpContextAccessor httpContextAccessor, IConfiguration configuration, ICosmosDBHandlerBase<TemporaryAccessUser> cosmosDBHandler, ILogger logger)
+        public SecurityGroupHandler(IHttpContextAccessor httpContextAccessor, IConfiguration configuration, ICosmosDBHandlerBase<TemporaryAccessUser> cosmosDBHandler, ILogger<SecurityGroupHandler> logger)
         {
             _logger = logger;
             loggedInUsersCache = new Dictionary<string, Dictionary<string, CachedUser>>();
