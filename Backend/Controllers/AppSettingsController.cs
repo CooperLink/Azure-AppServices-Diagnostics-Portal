@@ -17,7 +17,7 @@ namespace Backend.Controllers
         private IConfiguration config;
         private IWebHostEnvironment env;
 
-        private string[] BlockedSections = new string[] { "Kusto", "AppInsights" };
+        private string[] AllowedSections = new string[] { "Arm", "ContentSearch", "DeepSearch", "ApplicationInsights" };
 
         public AppSettingsController(IConfiguration configuration, IWebHostEnvironment env)
         {
@@ -33,12 +33,14 @@ namespace Backend.Controllers
                 return BadRequest("App setting name is empty");
             }
 
-            if (BlockedSections != null && BlockedSections.Any(sectionName => name.StartsWith(sectionName)))
+            if (AllowedSections != null && AllowedSections.Any(sectionName => name.StartsWith(sectionName)))
+            {
+                return Ok(config[name]);
+            }
+            else
             {
                 return NotFound($"App setting with the name '{name}' is not found");
             }
-
-            return Ok(config[name]);
         }
     }
 }
