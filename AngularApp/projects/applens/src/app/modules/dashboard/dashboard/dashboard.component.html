@@ -99,6 +99,11 @@
             <i class="fa fa-link" aria-hidden="true"></i>
           </a>
         </div>
+        <div *ngIf="stampAppLensLink !== ''">
+          <a href="{{stampAppLensLink}}" target="_blank">Open Stamp in AppLens
+            <i class="fa fa-link" aria-hidden="true"></i>
+          </a>
+        </div>
         <div *ngFor="let key of keys">
           <b>{{key}}:</b> &nbsp;<div style="display:inline">{{resource[key]}}</div>&nbsp;<span *ngIf="resource[key] !== '' && !checkWithHref(resource[key])"><img
               src="/assets/img/copy-icon.png" style="height: 12px;background-color:var(--imgButtonBackground);"
