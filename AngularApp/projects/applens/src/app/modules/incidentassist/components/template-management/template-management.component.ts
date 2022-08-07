@@ -130,7 +130,7 @@ export class TemplateManagementComponent implements OnInit {
       }
       else {
         this.pageLoading = false;
-        this.alternateContent = "No teams are onboarded. Please contact your administrator.";
+        this.alternateContent = "You do not have access to any team templates. Please contact your administrator.";
       }
     }, (err) => {
       this.displayLoader = false;

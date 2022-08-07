@@ -23,22 +23,22 @@ namespace AppLensV3.Services
             return null;
         }
 
-        Task<HttpResponseMessage> IIncidentAssistanceService.GetOnboardedTeams()
+        Task<HttpResponseMessage> IIncidentAssistanceService.GetOnboardedTeams(string userId)
         {
             return null;
         }
 
-        Task<HttpResponseMessage> IIncidentAssistanceService.GetTeamTemplate(string teamId, string incidentType)
+        Task<HttpResponseMessage> IIncidentAssistanceService.GetTeamTemplate(string teamId, string incidentType, string userId)
         {
             return null;
         }
 
-        Task<HttpResponseMessage> IIncidentAssistanceService.UpdateTeamTemplate(string teamId, string incidentType, object payload)
+        Task<HttpResponseMessage> IIncidentAssistanceService.UpdateTeamTemplate(string teamId, string incidentType, object payload, string userId)
         {
             return null;
         }
 
-        Task<HttpResponseMessage> IIncidentAssistanceService.TestTemplateWithIncident(object payload)
+        Task<HttpResponseMessage> IIncidentAssistanceService.TestTemplateWithIncident(object payload, string userId)
         {
             return null;
         }
