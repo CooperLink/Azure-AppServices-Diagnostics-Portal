@@ -15,17 +15,49 @@ using Microsoft.Extensions.Configuration;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Http;
+using System.Data;
 
 namespace AppLensV3.Services
 {
+    public class IncidentInfo
+    {
+        public string IncidentId {get; set; }
+
+        public string Title { get; set; }
+    }
+
     public interface IIncidentAssistanceService
     {
+        /// <summary>
+        /// Flag for whether incident assistance service is enabled.
+        /// </summary>
+        /// <returns>A boolean.</returns>
         Task<bool> IsEnabled();
+
+        /// <summary>
+        /// Get incident validation details from ICM Automation.
+        /// </summary>
+        /// <param name="incidentId">IncidentId.</param>
+        /// <returns>Json Object containing validation details.</returns>
         Task<HttpResponseMessage> GetIncidentInfo(string incidentId);
+
+        /// <summary>
+        /// Validate the information that user provides in AppLens Incident Assistance page.
+        /// </summary>
+        /// <param name="incidentId">IncidentId.</param>
+        /// <param name="payload">Payload.</param>
+        /// <param name="update">Update Flag.</param>
+        /// <returns>Json Object containing validation result.</returns>
         Task<HttpResponseMessage> ValidateAndUpdateIncident(string incidentId, object payload, string update);
+
         Task<HttpResponseMessage> GetOnboardedTeams(string userId);
+
         Task<HttpResponseMessage> GetTeamTemplate(string teamId, string incidentType, string userId);
+
         Task<HttpResponseMessage> UpdateTeamTemplate(string teamId, string incidentType, object payload, string userId);
+
+        Task<List<IncidentInfo>> GetTopIncidentsForTeam(string teamId, string incidentType, int num = 5);
+
         Task<HttpResponseMessage> TestTemplateWithIncident(object payload, string userId);
     }
 
@@ -35,6 +67,7 @@ namespace AppLensV3.Services
         private string IncidentAssistEndpoint;
         private string ApiKey;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IKustoQueryService _kustoQueryService;
         private readonly Lazy<HttpClient> _client = new Lazy<HttpClient>(() =>
         {
             var client = new HttpClient();
@@ -57,8 +90,9 @@ namespace AppLensV3.Services
             return request;
         }
 
-        public IncidentAssistanceService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        public IncidentAssistanceService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IKustoQueryService kustoQueryService)
         {
+            _kustoQueryService = kustoQueryService;
             if (!bool.TryParse(configuration["IncidentAssistance:IsEnabled"].ToString(), out isEnabled))
             {
                 isEnabled = false;
@@ -168,6 +202,28 @@ namespace AppLensV3.Services
             request = AddFunctionAuthHeaders(request);
             request.Content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
             return await _httpClient.SendAsync(request);
+        }
+
+        public async Task<List<IncidentInfo>> GetTopIncidentsForTeam(string teamId, string incidentType, int num = 5)
+        {
+            var incidentList = new List<IncidentInfo>();
+            string kustoQuery = $@"Incidents
+                | where OwningTeamId == '{teamId}' and IncidentType == '{incidentType}'
+                | distinct IncidentId, SourceCreateDate, Title
+                | top {num} by SourceCreateDate desc";
+            try
+            {
+                var results = await _kustoQueryService.ExecuteQueryAsync("icmcluster", "IcmDataWarehouse", kustoQuery, "ICMAutomation-FetchIcmIncidentsForTeam");
+                if (results != null && results.Rows.Count > 0)
+                {
+                    foreach (DataRow row in results.Rows)
+                    {
+                        incidentList.Add(new IncidentInfo() { IncidentId = row["IncidentId"].ToString(), Title = row["Title"].ToString() });
+                    }
+                }
+            }
+            catch { };
+            return incidentList;
         }
 
         public async Task<HttpResponseMessage> TestTemplateWithIncident(object payload, string userId) {

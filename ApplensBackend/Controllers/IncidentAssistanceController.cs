@@ -111,6 +111,19 @@ namespace AppLensV3.Controllers
             return StatusCode((int)response.StatusCode, await responseTask);
         }
 
+        [HttpGet("getTeamIncidents/{teamId}/{incidentType}")]
+        [HttpOptions("getTeamIncidents/{teamId}/{incidentType}")]
+        public async Task<IActionResult> GetTopTeamIncidents(string teamId, string incidentType, int count)
+        {
+            string userId = GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return StatusCode(401, "Invalid user. Does not contain valid upn.");
+            }
+            var response = await _incidentAssistanceService.GetTopIncidentsForTeam(teamId, incidentType, count > 0 ? count : 5);
+            return StatusCode(200, response);
+        }
+
         [HttpPost("updateTeamTemplate/{teamId}/{incidentType}")]
         [HttpOptions("updateTeamTemplate/{teamId}/{incidentType}")]
         public async Task<IActionResult> UpdateTeamTemplate([FromBody] JToken body, string teamId, string incidentType)

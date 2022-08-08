@@ -79,6 +79,17 @@ export class IncidentAssistanceService {
     });
     return request;
   }
+  
+  public getIncidentsForTeam(teamId: string, incidentType: string): Observable<any> {
+    if (incidentType == "CRI") incidentType = "CustomerReported";
+    else if (incidentType == "LSI") incidentType = "LiveSite";
+    let url = `${this.diagnosticApi}api/icm/getTeamIncidents/${teamId}/${incidentType}`;
+    let request = this._httpClient.get<HttpResponse<Object>>(url, {
+      headers: this._getHeaders(),
+      observe: 'response'
+    });
+    return request;
+  }
 
   public testTemplateWithIncident(body: any): Observable<any> {
     let url = `${this.diagnosticApi}api/icm/testTemplateWithIncident`;

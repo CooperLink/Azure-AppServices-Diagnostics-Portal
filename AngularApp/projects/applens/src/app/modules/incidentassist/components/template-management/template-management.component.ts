@@ -33,13 +33,27 @@ export class TemplateManagementComponent implements OnInit {
   testButtonDisabled: boolean = true;
   
   showTestBlade: boolean = false;
+  teamIncidentsForTest: IncidentInfo[] = [];
   testIncidentId: string = null;
   validationResponse: any = {};
   testinIncidentLoader: boolean = false;
   testIncidentError: string = null;
   errorButtonStatus = HealthStatus.Critical;
+
   onTestClick() {
     this.showTestBlade = true;
+    this.loaderMessage = "Loading incidents...";
+    this.displayLoader = true;
+    this._incidentAssistanceService.getIncidentsForTeam(this.selectedTeam.teamId, this.selectedTeam.incidentType.toString()).subscribe((res) => {
+      this.loaderMessage = null;
+      this.displayLoader = false;
+      if (res && res.body && res.body.length>0) {
+        this.teamIncidentsForTest = res.body;
+      }
+    } , (err) => {
+      this.loaderMessage = null;
+      this.displayLoader = false;
+    });
   }
 
   hideTestBlade(){
@@ -229,6 +243,7 @@ export class TemplateManagementComponent implements OnInit {
   }
 
   resetGlobals(){
+    this.teamIncidentsForTest = [];
     this.alternateContent = null;
     this.templateLoadError = null;
     this.footerMessage = null;
@@ -247,6 +262,11 @@ interface OnboardedTeam{
   teamId: string;
   teamName: string;
   incidentType: IncidentType;
+}
+
+interface IncidentInfo{
+  incidentId: string;
+  title: string;
 }
 
 enum IncidentType{

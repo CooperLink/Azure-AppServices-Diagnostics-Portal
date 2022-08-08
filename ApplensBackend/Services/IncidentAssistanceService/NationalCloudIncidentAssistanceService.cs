@@ -38,6 +38,11 @@ namespace AppLensV3.Services
             return null;
         }
 
+        Task<List<IncidentInfo>> IIncidentAssistanceService.GetTopIncidentsForTeam(string teamId, string incidentType, int num = 5)
+        {
+            return null;
+        }
+
         Task<HttpResponseMessage> IIncidentAssistanceService.TestTemplateWithIncident(object payload, string userId)
         {
             return null;

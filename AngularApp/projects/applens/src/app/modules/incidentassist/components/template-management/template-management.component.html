@@ -52,13 +52,28 @@
         <fab-panel [isOpen]="showTestBlade" (onDismiss)="hideTestBlade()" [type]="panelType" [isBlocking]="false" [customWidth]="'60vw'">
           <div class="panel-padding">
             <div class="section" style="margin-left: 10px;">
-              <div id="">
+              <div>
                 <fab-text-field [ariaLabel]="'Incident Id'" [(value)]="testIncidentId" [styles]="narrowTextFieldStyles"
                   [placeholder]="'Type an incident id'">
                 </fab-text-field>
                 <div *ngIf="testIncidentError && testIncidentError!== ''" class="mt-3 error-message-container">
                   <status-icon [status]="errorButtonStatus"></status-icon><span class="ml-3 error-message">{{testIncidentError}}</span>
                 </div>
+              </div>
+            </div>
+            <div *ngIf="teamIncidentsForTest && teamIncidentsForTest.length>0" class="section" style="margin-left: 10px;">
+              <div style="width:100%;">
+                <span>Here are some incidents on your team that you can use to test</span>
+                <table style="margin-top: 6px;">
+                  <tr>
+                    <th>IncidentId</th>
+                    <th>Title</th>
+                  </tr>
+                  <tr *ngFor="let incident of teamIncidentsForTest">
+                    <td>{{incident.incidentId}}</td>
+                    <td>{{incident.title}}</td>
+                  </tr>
+                </table>
               </div>
             </div>
             <div class="section">
