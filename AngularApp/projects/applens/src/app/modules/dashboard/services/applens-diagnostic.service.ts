@@ -146,10 +146,6 @@ export class ApplensDiagnosticService {
     return this._diagnosticApi.getUserInfo(userId);
   }
 
-  getHasTestersAccess(): Observable<any> {
-    return this._diagnosticApi.getHasTestersAccess();
-  }
-
   getCompilerResponse(body: any, isSystemInvoker: boolean, detectorId: string = '', startTime: string = '', endTime: string = '', dataSource: string = '', timeRange: string = '', additionalParams: any, publishingDetectorId: string): Observable<QueryResponse<DetectorResponse>> {
     if (isSystemInvoker === false) {
       return this._diagnosticApi.getCompilerResponse(
@@ -212,8 +208,12 @@ export class ApplensDiagnosticService {
     return this._diagnosticApi.pushDetectorChanges(branch, files, repoPaths, comment, changeType, resourceUri);
   }
 
-  makePullRequest(sourceBranch: string, targetBranch: string, title: string, resourceUri: string, description: string = "") {
-    return this._diagnosticApi.makePullRequest(sourceBranch, targetBranch, title, resourceUri, description);
+  makePullRequest(sourceBranch: string, targetBranch: string, title: string, resourceUri: string, reviewers: string[] = [], description: string = "") {
+    return this._diagnosticApi.makePullRequest(sourceBranch, targetBranch, title, resourceUri, reviewers, description);
+  }
+
+  deleteBranches(branch: string, resourceUri: string){
+    return this._diagnosticApi.deleteBranch(branch, resourceUri);
   }
 
   getBranches(resourceId: string) {

@@ -26,6 +26,7 @@ export * from './lib/services/backend-ctrl-query.service';
 export * from './lib/services/portal-action.service';
 export * from './lib/services/generic-breadcrumb.service';
 export * from './lib/services/generic-user-setting.service';
+export * from './lib/services/generic-portal.service';
 export * from './lib/config/diagnostic-data-config';
 export * from './lib/diagnostic-data.module';
 
@@ -58,4 +59,3 @@ export * from './lib/utilities/string-utilities';
 export * from './lib/components/step-views/step-view-lib';
 export * from "./lib/components/solution-orchestrator/solution-orchestrator.component";
 export * from './lib/utilities/uri-utilities';
-export * from './lib/utilities/resiliencyScoreReportHelper';

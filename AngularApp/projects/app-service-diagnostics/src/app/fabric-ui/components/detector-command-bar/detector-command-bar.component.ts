@@ -1,5 +1,5 @@
 import {
-  DetectorControlService, DiagnosticService, DetectorMetaData, DetectorResponse, TelemetryService, TelemetryEventNames, TelemetrySource, ResiliencyScoreReportHelper
+  DetectorControlService, DiagnosticService, DetectorMetaData, DetectorResponse, TelemetryService, TelemetryEventNames, TelemetrySource
 } from 'diagnostic-data';
 import { Component, AfterViewInit, Input } from '@angular/core';
 import { Globals } from '../../../globals';
@@ -10,6 +10,7 @@ import { OperatingSystem } from '../../../shared/models/site';
 import { AppType } from '../../../shared/models/portal';
 import { SeverityLevel } from '@microsoft/applicationinsights-web';
 import { DirectionalHint } from 'office-ui-fabric-react';
+import { ResiliencyScoreReportHelper } from '../../../shared/utilities/resiliencyScoreReportHelper';
 import { BehaviorSubject } from 'rxjs';
 import { DemoSubscriptions } from '../../../betaSubscriptions';
 import { Sku } from '../../../shared/models/server-farm';
@@ -51,7 +52,7 @@ export class DetectorCommandBarComponent implements AfterViewInit {
   resourceSku: Sku = Sku.All;
 
   public _checkIsWindowsApp(): boolean {
-    let webSiteService = this._resourceService as WebSitesService;   
+    let webSiteService = this._resourceService as WebSitesService;
     this.resourcePlatform = webSiteService.platform;
     this.resourceAppType = webSiteService.appType;
     this.resourceSku = webSiteService.sku;
@@ -66,20 +67,20 @@ export class DetectorCommandBarComponent implements AfterViewInit {
     // add logic for presenting initially to 100% of Subscriptions:  percentageToRelease = 1 (1=100%)
     let percentageToRelease = 1;
     // roughly split of percentageToRelease of subscriptions to use new feature.
-    
+
     let firstDigit = "0x" + subscriptionId.substr(0, 1);
-    this.displayRPDFButton = ((16 - parseInt(firstDigit, 16)) / 16 <= percentageToRelease || this._isBetaSubscription) && this._checkIsWindowsApp();    
+    this.displayRPDFButton = ((16 - parseInt(firstDigit, 16)) / 16 <= percentageToRelease || this._isBetaSubscription) && this._checkIsWindowsApp();
     const rSBDEventProperties = {
       'ResiliencyScoreButtonDisplayed': this.displayRPDFButton.toString(),
       'Subscription': this._route.parent.snapshot.params['subscriptionid'],
-      'Platform': this.resourcePlatform.toString(),
-      'AppType': this.resourceAppType.toString(),
-      'resourceSku': this.resourceAppType.toString(),
+      'Platform': this.resourcePlatform != undefined ? this.resourcePlatform.toString() : "",
+      'AppType': this.resourceAppType != undefined ? this.resourceAppType.toString(): "",
+      'resourceSku': this.resourceSku != undefined ? this.resourceSku.toString(): "",
     };
     this.telemetryService.logEvent(TelemetryEventNames.ResiliencyScoreReportButtonDisplayed, rSBDEventProperties);
     const loggingError = new Error();
     this.gRPDFButtonDisabled = false;
-    //Get showCoachMark value(string) from local storage (if exists), then convert to boolean   
+    //Get showCoachMark value(string) from local storage (if exists), then convert to boolean
     try {
       if (this.displayRPDFButton){
         if (localStorage.getItem("showCoachmark") != undefined) {
@@ -115,12 +116,12 @@ export class DetectorCommandBarComponent implements AfterViewInit {
     this.globals.openFeedback = !this.globals.openFeedback;
   }
 
-  generateResiliencyPDF() {    
-    let sT = new Date();    
+  generateResiliencyPDF() {
+    let sT = new Date();
     const rSEventProperties = {
       'Subscription': this._route.parent.snapshot.params['subscriptionid'],
       'TimeClicked': sT.toUTCString()
-    };    
+    };
     this.telemetryService.logEvent(TelemetryEventNames.ResiliencyScoreReportButtonClicked, rSEventProperties);
     // Once the button is clicked no need to show Coachmark anymore:
     const loggingError = new Error();
@@ -141,7 +142,7 @@ export class DetectorCommandBarComponent implements AfterViewInit {
       this.telemetryService.logException(loggingError, null, null, _severityLevel);
     }
     // Taking starting time
-    
+
     this.gRPDFButtonText = "Getting Resiliency Score report...";
     this.gRPDFButtonIcon = {
       iconName: 'Download',
@@ -179,7 +180,7 @@ export class DetectorCommandBarComponent implements AfterViewInit {
           'DetectorTimeTaken': detectorTimeTaken.toString(),
           'TotalTimeTaken': totalTimeTaken.toString()
         };
-        this.telemetryService.logEvent(TelemetryEventNames.ResiliencyScoreReportDownloaded, eventProperties);                
+        this.telemetryService.logEvent(TelemetryEventNames.ResiliencyScoreReportDownloaded, eventProperties);
         this.gRPDFButtonText = "Get Resiliency Score report";
         this.gRPDFButtonIcon = { iconName: 'Download' };
         this.gRPDFButtonDisabled = false;
@@ -244,7 +245,7 @@ export class DetectorCommandBarComponent implements AfterViewInit {
           PDFButtonIndex = i;
         }
       });
-      
+
       if(PDFButtonIndex >= 0 && PDFButtonIndex < btns.length && btns[PDFButtonIndex]) {
         const PDFButton = btns[PDFButtonIndex];
         PDFButton.setAttribute("id", pdfButtonId);
@@ -276,6 +277,6 @@ export class DetectorCommandBarComponent implements AfterViewInit {
   showingTeachingBubble(){
     if (this.displayRPDFButton){
       this.showTeachingBubble = true;
-    }  
+    }
   }
 }

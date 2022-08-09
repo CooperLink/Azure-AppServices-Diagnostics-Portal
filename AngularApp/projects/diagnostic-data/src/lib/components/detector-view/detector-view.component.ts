@@ -88,7 +88,7 @@ export class DetectorViewComponent implements OnInit {
       height: "80%"
     },
     rootFocused: {
-      border: "1px solid black",
+      border: "2px solid black",
     }
   }
   iconStyles:IIconProps["styles"] = {
@@ -401,7 +401,7 @@ export class DetectorViewComponent implements OnInit {
   }
 
   getTimestampAsString(dateTime: Moment) {
-    return dateTime.format('DD-MMM-YY hh:mm A') + ' UTC';
+    return dateTime.format(this.detectorControlService.stringFormat) + ' UTC';
   }
 
   getDowntimeLabel(d: DownTime) {

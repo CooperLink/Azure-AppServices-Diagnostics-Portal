@@ -24,6 +24,7 @@ import {AlertInfo, ConfirmationOption} from '../../../shared/models/alerts';
 import { TelemetryService } from 'diagnostic-data';
 import { TelemetryEventNames } from 'diagnostic-data';
 import { HttpErrorResponse } from '@angular/common/http';
+import { UserAccessStatus } from "../../../shared/models/alerts";
 
 @Component({
   selector: 'dashboard',
@@ -45,6 +46,7 @@ export class DashboardComponent implements OnDestroy {
   currentRoutePath: string[];
   resource: any;
   observerLink: string = "";
+  stampAppLensLink: string = "";
   showUserInformation: boolean;
   resourceReady: Observable<any>;
   resourceDetailsSub: Subscription;
@@ -93,6 +95,7 @@ export class DashboardComponent implements OnDestroy {
   alertDialogStyles = { main: { maxWidth: "70vw!important", minWidth: "40vw!important" } };
   alertDialogProps = {isBlocking: true}
   dialogType: DialogType = DialogType.normal;
+  crossSubJustification: string = '';
 
   constructor(public resourceService: ResourceService, private startupService: StartupService,  private _detectorControlService: DetectorControlService,
     private _router: Router, private _activatedRoute: ActivatedRoute, private _navigator: FeatureNavigationService,
@@ -185,10 +188,39 @@ export class DashboardComponent implements OnDestroy {
     window.location.href = "/?" + queryString;
   }
 
+  examineUserAccess() {
+    this._diagnosticApiService.checkUserAccess().subscribe(res => {
+      if (res && res.Status == UserAccessStatus.CaseNumberNeeded) {
+        this._diagnosticApiService.setCaseNumberNeededForUser(true);
+      }
+      else {
+        this._diagnosticApiService.setCaseNumberNeededForUser(false);
+      }
+    },(err) => {
+      if (err.status === 404) {
+        //This means userAuthorization is not yet available on the backend
+        this._diagnosticApiService.setCaseNumberNeededForUser(false);
+        return;
+      }
+      if (err.status === 403) {
+        this.navigateToUnauthorized();
+      }
+    });
+  }
+
+  navigateToUnauthorized(){
+    this._router.navigate(['unauthorized'], {queryParams: {isDurianEnabled: true}});
+  }
+
   handleUserResponse(userResponse: ConfirmationOption) {
     let alias = this._adalService.userInfo.profile ? this._adalService.userInfo.profile.upn : '';
-    this._telemetryService.logEvent(TelemetryEventNames.ResourceOutOfScopeUserResponse, {userId: alias, url: this._router.url, userResponse: userResponse.label, caseNumber: this._diagnosticApiService.CustomerCaseNumber});
     if (userResponse.value === 'yes') {
+      if (!(this.crossSubJustification && this.crossSubJustification.length > 0)) {
+        this.errorInDialog = 'Please enter a justification';
+        this.displayErrorInDialog = true;
+        return;
+      }
+      this._telemetryService.logEvent(TelemetryEventNames.ResourceOutOfScopeUserResponse, {userId: alias, url: this._router.url, userResponse: userResponse.label, userJustification: this.crossSubJustification, caseNumber: this._diagnosticApiService.CustomerCaseNumber});
       this.showLoaderInDialog = true;
       this._diagnosticService.unrelatedResourceConfirmation().subscribe(() => {
         this.showLoaderInDialog = false;
@@ -204,12 +236,29 @@ export class DashboardComponent implements OnDestroy {
       });
     }
     else if (userResponse.value == 'no') {
+      this._telemetryService.logEvent(TelemetryEventNames.ResourceOutOfScopeUserResponse, {userId: alias, url: this._router.url, userResponse: userResponse.label, caseNumber: this._diagnosticApiService.CustomerCaseNumber});
       this.accessError = this.alertInfo.details;
       this.navigateBackToHomePage();
     }
   }
 
+  addCaseNumberToLinks(caseNumber){
+    if (caseNumber && caseNumber.length > 0) {
+      var x = document.getElementsByTagName("a");
+      for (var i = 0; i < x.length; i++) {
+        let link = x[i].href;
+        if (link && (link.startsWith("https://applens.azurewebsites.net") || link.startsWith("https://applens.trafficmanager.net")) && !(link.includes("caseNumber"))) {
+          x[i].href = link + (link.includes("?")? "&": "?") + "caseNumber=" + caseNumber;
+        }
+      }
+    }
+  }
+
   ngOnInit() {
+    if (this._diagnosticApiService.CustomerCaseNumber && this._diagnosticApiService.CustomerCaseNumber.length>0) {
+      setInterval(() => {this.addCaseNumberToLinks(this._diagnosticApiService.CustomerCaseNumber)}, 500);
+    }
+    this.examineUserAccess();
     this.stillLoading = true;
     this._diagnosticService.getDetectors().subscribe(detectors => {
       this.stillLoading = false;
@@ -281,6 +330,10 @@ export class DashboardComponent implements OnDestroy {
         }
 
         this.keys = Object.keys(this.resource);
+        if (this.keys.indexOf("StampName")>=0){
+          this.stampAppLensLink = `${window.location.origin}/stamps/${this.resource.StampName}`;
+        }
+        this.keys.sort((a,b) => a.localeCompare(b));
         this.replaceResourceEmptyValue();
         if (serviceInputs.resourceType.toString().toLowerCase() == "stamps") {
           this.updateAdditionalStampInfo();
