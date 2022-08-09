@@ -66,7 +66,6 @@ namespace AppLensV3.Services
         private bool isEnabled;
         private string IncidentAssistEndpoint;
         private string ApiKey;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IKustoQueryService _kustoQueryService;
         private readonly Lazy<HttpClient> _client = new Lazy<HttpClient>(() =>
         {
@@ -90,7 +89,7 @@ namespace AppLensV3.Services
             return request;
         }
 
-        public IncidentAssistanceService(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IKustoQueryService kustoQueryService)
+        public IncidentAssistanceService(IConfiguration configuration, IKustoQueryService kustoQueryService)
         {
             _kustoQueryService = kustoQueryService;
             if (!bool.TryParse(configuration["IncidentAssistance:IsEnabled"].ToString(), out isEnabled))
@@ -102,39 +101,11 @@ namespace AppLensV3.Services
                 IncidentAssistEndpoint = configuration["IncidentAssistance:IncidentAssistEndpoint"].ToString();
                 ApiKey = configuration["IncidentAssistance:ApiKey"].ToString();
             }
-            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<bool> IsEnabled()
         {
             return isEnabled;
-        }
-
-        private Tuple<bool, string> CheckUserAccess(string allowedUsers)
-        {
-            if (string.IsNullOrWhiteSpace(allowedUsers))
-            {
-                return new Tuple<bool, string>(false, "Team admin has not set an allowed users list.");
-            }
-            var allowedUsersList = allowedUsers.ToLower().Split(',');
-            string authHeader = _httpContextAccessor.HttpContext.Request.Headers.TryGetValue("Authorization", out var headerValue) ? headerValue.ToString() : null;
-            if (!string.IsNullOrWhiteSpace(authHeader))
-            {
-                string accessToken = authHeader.Split(" ")[1];
-                var token = new JwtSecurityToken(accessToken);
-                object upn;
-                string userAlias = null;
-                if (token.Payload.TryGetValue("upn", out upn))
-                {
-                    userAlias = upn != null ? upn.ToString().Split('@')[0].ToLower() : null;
-                }
-                bool hasAccess = (!string.IsNullOrWhiteSpace(userAlias) && allowedUsersList.FirstOrDefault(x => x == userAlias) != null);
-                return new Tuple<bool, string>(hasAccess, hasAccess ? "" : "User is not authorized to access this team template.");
-            }
-            else
-            {
-                return new Tuple<bool, string>(false, "Request does not have an authorization header.");
-            }
         }
 
         public async Task<HttpResponseMessage> GetIncidentInfo(string incidentId)
