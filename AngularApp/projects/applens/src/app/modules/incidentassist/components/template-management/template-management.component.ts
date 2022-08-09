@@ -40,26 +40,6 @@ export class TemplateManagementComponent implements OnInit {
   testIncidentError: string = null;
   errorButtonStatus = HealthStatus.Critical;
 
-  onTestClick() {
-    this.showTestBlade = true;
-    this.loaderMessage = "Loading incidents...";
-    this.displayLoader = true;
-    this._incidentAssistanceService.getIncidentsForTeam(this.selectedTeam.teamId, this.selectedTeam.incidentType.toString()).subscribe((res) => {
-      this.loaderMessage = null;
-      this.displayLoader = false;
-      if (res && res.body && res.body.length>0) {
-        this.teamIncidentsForTest = res.body;
-      }
-    } , (err) => {
-      this.loaderMessage = null;
-      this.displayLoader = false;
-    });
-  }
-
-  hideTestBlade(){
-    this.showTestBlade = false;
-  }
-
   narrowTextFieldStyles: Partial<ITextFieldStyles> = { fieldGroup: { width: 200 } };
 
   editorOptions: any = null;
@@ -188,6 +168,26 @@ export class TemplateManagementComponent implements OnInit {
       this.displayLoader = false;
       this.templateLoadError = err.error.length < 100? err.error: `Failed to load the template. ${err.error}`;
     });
+  }
+
+  onTestClick() {
+    this.showTestBlade = true;
+    this.testinIncidentLoader = true;
+    this.loaderMessage = `Fetching recent incidents from your team...`;
+    this._incidentAssistanceService.getIncidentsForTeam(this.selectedTeam.teamId, this.selectedTeam.incidentType.toString()).subscribe((res) => {
+      this.loaderMessage = null;
+      this.testinIncidentLoader = false;
+      if (res && res.body && res.body.length>0) {
+        this.teamIncidentsForTest = res.body;
+      }
+    } , (err) => {
+      this.loaderMessage = null;
+      this.testinIncidentLoader = false;
+    });
+  }
+
+  hideTestBlade(){
+    this.showTestBlade = false;
   }
 
   onTestIncidentClick(){

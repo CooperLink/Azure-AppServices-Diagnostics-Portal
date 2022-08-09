@@ -120,6 +120,20 @@ namespace AppLensV3.Controllers
             {
                 return StatusCode(401, "Invalid user. Does not contain valid upn.");
             }
+            if (string.IsNullOrWhiteSpace(incidentType))
+            {
+                return BadRequest("incidentType cannot be empty");
+            }
+            switch (incidentType)
+            {
+                case "LSI":
+                    incidentType = "LiveSite";
+                    break;
+                case "CRI":
+                default:
+                    incidentType = "CustomerReported";
+                    break;
+            }
             var response = await _incidentAssistanceService.GetTopIncidentsForTeam(teamId, incidentType, count > 0 ? count : 5);
             return StatusCode(200, response);
         }
