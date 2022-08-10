@@ -53,7 +53,10 @@
           <div class="panel-padding">
             <div class="section" style="margin-left: 10px;">
               <div>
-                <fab-text-field [ariaLabel]="'Incident Id'" [(value)]="testIncidentId" [styles]="narrowTextFieldStyles"
+                <label for="test-incident-input-field">
+                  Incident Id <span class="required">*</span>
+                </label>
+                <fab-text-field id="test-incident-input-field" [ariaLabel]="'Incident Id'" [(value)]="testIncidentId" [styles]="narrowTextFieldStyles"
                   [placeholder]="'Type an incident id'">
                 </fab-text-field>
                 <div *ngIf="testIncidentError && testIncidentError!== ''" class="mt-3 error-message-container">
@@ -78,7 +81,7 @@
             </div>
             <div class="section">
               <fab-primary-button id="test-incident-template-button" contentStyle="margin-top: 20px; margin-left: 10px;"
-                  type="Submit" text='Test Incident' (click)="onTestIncidentClick()">
+                  type="Submit" text='Test Incident' (click)="onTestIncidentClick()" [disabled]="!(testIncidentId && testIncidentId.length>6 && testIncidentId.length<15)">
               </fab-primary-button>
             </div>
             <div *ngIf="testinIncidentLoader" class="loader-block">

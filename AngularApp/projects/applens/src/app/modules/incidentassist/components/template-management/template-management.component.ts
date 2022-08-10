@@ -96,6 +96,7 @@ export class TemplateManagementComponent implements OnInit {
         this.pageLoading = false;
       }
     }, (err) => {
+      this.alternateContent = "An error occurred in loading the page, please try again. If the error persists, please contact AppLens team.";
       this.displayLoader = false;
     });
   }
@@ -124,7 +125,7 @@ export class TemplateManagementComponent implements OnInit {
       }
       else {
         this.pageLoading = false;
-        this.alternateContent = "You do not have access to any team templates. Please contact your administrator.";
+        this.alternateContent = "You do not have access to any AppLens ICM Automation team templates. Please contact your team's ICM admin.";
       }
     }, (err) => {
       this.displayLoader = false;
