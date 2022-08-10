@@ -23,6 +23,7 @@ export class TemplateManagementComponent implements OnInit {
   updatedSuccessfully: boolean = false;
   footerMessage: string = null;
   footerMessageType: string = "none";
+  retryMessage: string = "Please try again. If the error persists, please contact AppLens team.";
   userId: string = null;
   loaderMessage = null;
   panelType = Number(String(PanelType.custom));
@@ -96,7 +97,7 @@ export class TemplateManagementComponent implements OnInit {
         this.pageLoading = false;
       }
     }, (err) => {
-      this.alternateContent = "An error occurred in loading the page, please try again. If the error persists, please contact AppLens team.";
+      this.alternateContent = `An error occurred in loading the page. ${this.retryMessage}`;
       this.displayLoader = false;
     });
   }
@@ -125,12 +126,17 @@ export class TemplateManagementComponent implements OnInit {
       }
       else {
         this.pageLoading = false;
-        this.alternateContent = "You do not have access to any AppLens ICM Automation team templates. Please contact your team's ICM admin.";
+        this.alternateContent = "You do not have access to any AppLens ICM Automation team templates. Please contact your team's AppLens ICM Assistance admin.";
       }
     }, (err) => {
       this.displayLoader = false;
       this.pageLoading = false;
-      this.alternateContent = "An error occurred in loading the page, please try again. If the error persists, please contact AppLens team.";
+      if (err.status == 404) {
+        this.alternateContent = `${err.error} ${this.retryMessage}`;
+      }
+      else {
+        this.alternateContent = `An error occurred in loading the page. ${this.retryMessage}`;
+      }
     });
   }
 
@@ -237,10 +243,6 @@ export class TemplateManagementComponent implements OnInit {
         this.footerMessageType = "error";
       });
     }
-  }
-
-  resetLoadedTeam(){
-
   }
 
   resetGlobals(){
